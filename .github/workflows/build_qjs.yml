@@ -1,0 +1,166 @@
+name: Build quickjs
+
+on: 
+  workflow_dispatch:
+
+jobs:
+  build_ubuntu:
+    name: Ubuntu 
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Checkout quickjs
+      uses: actions/checkout@v2
+      with:
+        repository: 'bellard/quickjs'
+        path: ${{github.workspace}}/quickjs/
+    - name: Run build script
+      run: |
+        cd $GITHUB_WORKSPACE
+        cp -r qjs-build/* $GITHUB_WORKSPACE/quickjs/
+        cd $GITHUB_WORKSPACE/quickjs/
+        sh make_linux64.sh
+        mkdir -p ~/qjs/Inc
+        cp quickjs.h ~/qjs/Inc
+    - uses: actions/upload-artifact@v2
+      with:
+        name: qjs_bin
+        path: ~/qjs/**/*
+        
+  build_macos:
+    name: macOS
+    runs-on: macos-10.15
+    steps:
+    - uses: actions/checkout@v2
+    - name: Checkout quickjs
+      uses: actions/checkout@v2
+      with:
+        repository: 'bellard/quickjs'
+        path: ${{github.workspace}}/quickjs/
+    - name: Run build script
+      run: |
+        cd $GITHUB_WORKSPACE
+        cp -r qjs-build/* $GITHUB_WORKSPACE/quickjs/
+        cd $GITHUB_WORKSPACE/quickjs/
+        sh make_osx.sh
+    - uses: actions/upload-artifact@v2
+      with:
+        name: qjs_bin
+        path: ~/qjs/**/*
+        
+  build_ios:
+    name: iOS
+    runs-on: macos-10.15
+    steps:
+    - uses: actions/checkout@v2
+    - name: Checkout quickjs
+      uses: actions/checkout@v2
+      with:
+        repository: 'bellard/quickjs'
+        path: ${{github.workspace}}/quickjs/
+    - name: Run build script
+      run: |
+        cd $GITHUB_WORKSPACE
+        cp -r qjs-build/* $GITHUB_WORKSPACE/quickjs/
+        cd $GITHUB_WORKSPACE/quickjs/
+        sh make_ios.sh
+    - uses: actions/upload-artifact@v2
+      with:
+        name: qjs_bin
+        path: ~/qjs/**/*
+
+  build_window:
+    name: Windows
+    runs-on: windows-2019
+    steps:
+    - uses: actions/checkout@v2
+    - name: Checkout quickjs
+      uses: actions/checkout@v2
+      with:
+        repository: 'bellard/quickjs'
+        path: ${{github.workspace}}/quickjs/
+    - uses: msys2/setup-msys2@v2
+      with:
+        update: true
+        install: 'cmake mingw-w64-x86_64-gcc mingw-w64-x86_64-make mingw-w64-x86_64-dlfcn'
+    - shell: msys2 {0}
+      run: |
+        echo "#! /bin/sh" > /mingw64/bin/make
+        echo "\"mingw32-make\" \"\$@\"" >> /mingw64/bin/make
+    - shell: msys2 {0}
+      run: |
+        cd quickjs
+        make libquickjs.a
+    - name: Prepare
+      shell: bash
+      run: |
+        cd quickjs
+        mkdir -p ../qjs/Lib/Win64/
+        cp libquickjs.a ../qjs/Lib/Win64/libquickjs.a
+    - uses: actions/upload-artifact@v2
+      with:
+        name: qjs_bin
+        path: qjs/**/*
+
+  build_window_32:
+    name: Windows32
+    runs-on: windows-2019
+    steps:
+    - uses: actions/checkout@v2
+    - name: Checkout quickjs
+      uses: actions/checkout@v2
+      with:
+        repository: 'bellard/quickjs'
+        path: ${{github.workspace}}/quickjs/
+    - uses: msys2/setup-msys2@v2
+      with:
+        msystem: MINGW32
+        update: true
+        install: 'cmake mingw-w64-i686-gcc mingw-w64-i686-make mingw-w64-i686-dlfcn'
+    - shell: msys2 {0}
+      run: |
+        echo "#! /bin/sh" > /mingw32/bin/make
+        echo "\"mingw32-make\" \"\$@\"" >> /mingw32/bin/make
+    - shell: msys2 {0}
+      run: |
+        cd quickjs
+        make libquickjs.a
+    - name: Prepare
+      shell: bash
+      run: |
+        cd quickjs
+        mkdir -p ../qjs/Lib/Win32/
+        cp libquickjs.a ../qjs/Lib/Win32/libquickjs.a
+    - uses: actions/upload-artifact@v2
+      with:
+        name: qjs_bin
+        path: qjs/**/*
+
+  build_android:
+    name: Android 
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Checkout quickjs
+      uses: actions/checkout@v2
+      with:
+        repository: 'bellard/quickjs'
+        path: ${{github.workspace}}/quickjs/
+    - name: Install NDK
+      run: |
+        cd ~
+        wget -O NDK -q https://dl.google.com/android/repository/android-ndk-r15c-linux-x86_64.zip
+        sudo apt install unzip -y
+        unzip -q NDK
+        export ANDROID_NDK=~/android-ndk-r15c
+    - name: Run build script
+      run: |
+        cd $GITHUB_WORKSPACE
+        cp -r qjs-build/* $GITHUB_WORKSPACE/quickjs/
+        cd $GITHUB_WORKSPACE/quickjs/
+        chmod +x make_android.sh
+        ./make_android.sh
+    - uses: actions/upload-artifact@v2
+      with:
+        name: qjs_bin
+        path: ~/qjs/**/*
