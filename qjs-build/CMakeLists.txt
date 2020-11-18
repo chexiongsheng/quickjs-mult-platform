@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.10)
 
 project(quickjs LANGUAGES C)
 
+if (APPLE AND NOT IOS)
+   set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum OS X deployment version")
+endif()
+
 set(qjs_cflags -Wall)
 if(CMAKE_C_COMPILER_ID MATCHES "AppleClang|Clang")
     list(APPEND qjs_cflags
@@ -34,7 +38,6 @@ set_target_properties(quickjs PROPERTIES
 target_compile_options(quickjs PRIVATE ${qjs_cflags})
 target_compile_definitions(quickjs PRIVATE
         CONFIG_BIGNUM
-        JS_STRICT_NAN_BOXING
         CONFIG_VERSION="${QJS_VERSION_STR}"
         )
 if (CMAKE_BUILD_TYPE MATCHES Debug)
