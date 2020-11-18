@@ -34,6 +34,7 @@ set_target_properties(quickjs PROPERTIES
 target_compile_options(quickjs PRIVATE ${qjs_cflags})
 target_compile_definitions(quickjs PRIVATE
         CONFIG_BIGNUM
+        JS_STRICT_NAN_BOXING
         CONFIG_VERSION="${QJS_VERSION_STR}"
         )
 if (CMAKE_BUILD_TYPE MATCHES Debug)
